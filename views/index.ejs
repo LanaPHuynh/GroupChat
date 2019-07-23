@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GROUP CHAT</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type ="text/javascript">
+        $(document).ready(function (){
+            var socket = io();
+            
+
+            //USERS:
+            function input(){
+                let input = prompt("PLEASE ENTER YOUR NAME TO JOIN THE CHAT");
+                while(input.length < 1){
+                    input = prompt("PLEASE ENTER YOUR NAME TO JOIN THE CHAT");
+                }
+                return input;
+            }
+            var name = input();
+
+            //sending the server the name of the new user 
+            socket.emit('new_user_joined',{name: name});
+
+            
+            socket.on('existing_users', function(data){
+                //sending the new user the names of all the current users 
+                console.log("sending the current user all the names of the current users")
+                for(var key in data){
+                    $('#names').append("<li style='list-style: none'>" + data[key] + "</li>");
+                }
+            });
+
+            socket.on('new_user', function(data){
+                console.log("logging the data: " + data.name);
+                $('#names').append("<li style='list-style: none'>" + data.name + "</li>");
+                $('#ms-box').append('<p style="font-style: italic; color:blue;">' + data.name + ' has joined the chat room!</p>');
+
+            });
+            
+
+            //MESSAGING:
+            $('#btn').click(function(){
+                var date = new Date();
+                var options = {
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+                };
+                var timeString = date.toLocaleString('en-US', options);
+                socket.emit('messages', {name: name, msg: $('#msg').val(), time: timeString});
+            });
+
+            socket.on('existing_messages', function(data){
+                // $('#ms-box').append('<p>' + )
+                for(var msg in data){
+                $('#ms-box').append('<p>' + data[msg].name + ": " + data[msg].message + '</p>');
+                }
+            });
+
+            socket.on('new_message', function(data){
+                $('#ms-box').append('<p><span style="color:grey; vertical-align:center;">' + data.time + '</span>   <span style="font-weight: bold;">' + data.name + "</span>: " + data.message +'</p>');
+            });
+
+            socket.on('user_disconnected', function(data){
+                $('#ms-box').append('<p style="font-style: italic; color:red;">' + data + ' has left the chat room!</p>');
+            })
+        });
+    </script>
+</head>
+<body style="width:700px; height:500px; border:2px solid turquoise; padding:10px;"">
+    <div id="users_in_chat" style="display: inline-block; width: 150px; height: 500px;">
+        <h5>Current Users:</h5>
+            <ul id="names">
+            </ul>
+    </div>
+    <div id="ms-box" style="vertical-align: top; display:inline-block; width: 540px; height: 495px; position: relative;">
+        <input style="width:490px; height:29px; position:absolute;
+        bottom:0; left:0; display:inline-block" type="text" id="msg" name="msg" placeholder="Enter your message here...">
+        <button id="btn" style="position:absolute;
+        bottom:0; right:0; display: inline-block; height: 35px;">Send</button>
+    </div>
+</body>
+</html>

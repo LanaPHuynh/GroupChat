@@ -1,0 +1,9 @@
+# all hidden files 
+.*
+# except .gitignore file
+!/.gitignore
+
+/node_modules
+/package-lock.json
+
+
